@@ -33,7 +33,9 @@
   <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript">
 </p>
 
-![Dashboard Screenshot](https://drslid.github.io/LYWSD02-BLE-Dashboard/img/dashboard_lywsd02.jpg)
+<p align="center">
+  <img src="https://drslid.github.io/LYWSD02-BLE-Dashboard/img/dashboard_lywsd02.jpg" alt="Dashboard lywsd02 Screenshot" width="600">
+</p>
 
 ## 📖 Table of Contents  
 1. [🚀 Key Features](#key-features)
