@@ -119,7 +119,8 @@
         </div>
       </div>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
+    <!-- Mise à jour du grid pour 4 cartes -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
       <div class="sensor-card bg-white rounded-xl shadow-md p-5">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-lg font-semibold flex items-center gap-2">
@@ -173,6 +174,28 @@
           <div class="w-24 h-3 bg-gray-200 rounded-full overflow-hidden mt-2">
             <div id="battery-bar" class="h-full bg-green-500" style="width: 0%"></div>
           </div>
+        </div>
+      </div>
+      <!-- Nouvelle carte pour afficher l'heure courante du dispositif -->
+      <div class="sensor-card bg-white rounded-xl shadow-md p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold flex items-center gap-2">
+            <i class="fas fa-clock text-secondary-600"></i>
+            Device Time
+          </h2>
+          <span class="text-xs bg-gray-100 px-2 py-1 rounded-full" id="device-time-timestamp">--:--:--</span>
+        </div>
+        <div class="flex items-end justify-between">
+          <div>
+            <div class="value-highlight text-gray-800" id="device-time">--</div>
+            <div class="text-sm text-gray-500">Current device time</div>
+          </div>
+        </div>
+        <div class="mt-4">
+          <button id="refreshTimeBtn" class="w-full px-4 py-2 bg-secondary-600 text-white rounded-lg hover:bg-secondary-700 transition-colors flex items-center justify-center gap-2">
+            <i class="fas fa-sync-alt"></i>
+            Refresh Time
+          </button>
         </div>
       </div>
     </div>
@@ -280,6 +303,7 @@
     let device, server, service;
     let updateCounter = 0;
     let isConnected = false;
+
     const log = (msg, type = 'info') => {
       const logs = document.getElementById('logs');
       if (logs.querySelector('.text-center')) {
@@ -307,6 +331,7 @@
       logs.appendChild(logEntry);
       logs.scrollTop = logs.scrollHeight;
     };
+
     const updateBatteryUI = (batteryLevel) => {
       document.getElementById('battery').textContent = `${batteryLevel}%`;
       document.getElementById('battery-bar').style.width = `${batteryLevel}%`;
@@ -323,6 +348,7 @@
         batteryBar.classList.add('bg-green-500');
       }
     };
+
     const updateHumidityUI = (humidityLevel) => {
       document.getElementById('humidity').textContent = `${humidityLevel}%`;
       document.getElementById('humidity-bar').style.width = `${humidityLevel}%`;
@@ -339,6 +365,7 @@
         humidityBar.classList.add('bg-blue-500');
       }
     };
+
     const updateTemperatureUI = (tempCelsius) => {
       const isFahrenheit = document.querySelector('input[name="unit"]:checked').value === '1';
       const tempValue = isFahrenheit ? (tempCelsius * 9/5 + 32).toFixed(2) : tempCelsius.toFixed(2);
@@ -346,6 +373,31 @@
       document.getElementById('temperature').textContent = `${tempValue} ${unit}`;
       document.getElementById('temp-timestamp').textContent = new Date().toLocaleTimeString();
     };
+
+    // Nouvelle fonction pour lire et afficher l'heure du dispositif
+    const updateDeviceTime = async () => {
+      if (!isConnected) {
+        log('Device is not connected. Please connect first.', 'warning');
+        return;
+      }
+      try {
+        const timeChar = await service.getCharacteristic(TIME_UUID);
+        const value = await timeChar.readValue();
+        if (value.byteLength >= 4) {
+          const timestamp = value.getUint32(0, true);
+          const tz = value.byteLength > 4 ? value.getUint8(4) : 0;
+          const deviceDate = new Date(timestamp * 1000);
+          document.getElementById('device-time').textContent = deviceDate.toLocaleTimeString();
+          document.getElementById('device-time-timestamp').textContent = new Date().toLocaleTimeString();
+          log('Device time read successfully', 'success');
+        } else {
+          log('Invalid time characteristic value', 'error');
+        }
+      } catch (err) {
+        log(`Error reading device time: ${err}`, 'error');
+      }
+    };
+
     const connect = async () => {
       log('Searching for device...');
       const connectBtn = document.getElementById('connectBtn');
@@ -388,6 +440,8 @@
         });
         await dataChar.startNotifications();
         log('Notifications started for temperature/humidity', 'success');
+        // Mise à jour de l'heure du dispositif dès la connexion
+        updateDeviceTime();
       } catch (err) {
         isConnected = false;
         log(`Connection failed: ${err}`, 'error');
@@ -399,6 +453,7 @@
           : '<i class="fas fa-plug"></i> Connect';
       }
     };
+
     const handleDisconnect = () => {
       if (isConnected) {
         isConnected = false;
@@ -406,6 +461,7 @@
         updateConnectionStatus(false);
       }
     };
+
     const updateConnectionStatus = (connected) => {
       const status = document.getElementById('status');
       const connectBtn = document.getElementById('connectBtn');
@@ -419,6 +475,7 @@
         connectBtn.innerHTML = '<i class="fas fa-plug"></i> Connect';
       }
     };
+
     const syncTime = async () => {
       if (!isConnected) {
         log('Device is not connected. Please connect first.', 'warning');
@@ -445,6 +502,7 @@
         syncBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Sync Device Time';
       }
     };
+
     const updateUnit = async () => {
       if (!isConnected) {
         log('Device is not connected. Please connect first.', 'warning');
@@ -465,6 +523,7 @@
         unitBtn.innerHTML = '<i class="fas fa-save"></i> Save Unit Preference';
       }
     };
+
     document.getElementById('connectBtn').addEventListener('click', () => {
       if (isConnected) {
         log('Disconnecting from device...');
@@ -494,6 +553,7 @@
       document.getElementById('offsetMinutesRange').value = value;
       document.getElementById('offsetMinutes').value = value;
     });
+    document.getElementById('refreshTimeBtn').addEventListener('click', updateDeviceTime);
     window.addEventListener('DOMContentLoaded', () => {
       const tzOffset = -new Date().getTimezoneOffset() / 60;
       const tzSelect = document.getElementById('timezone');

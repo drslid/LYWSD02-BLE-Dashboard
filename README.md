@@ -19,7 +19,7 @@
 <h1 align="center"> 📡 LYWSD02 BLE Dashboard 🌡️💧🔋 </h1>
 
 <p align="center">
-  A web interface to monitor and configure your Xiaomi Mijia LYWSD02 temperature and humidity sensor via Bluetooth Low Energy (BLE).
+  A web interface to monitor and configure your <a target="_blank" href="https://www.mi.com/global/product/xiaomi-temperature-and-humidity-monitor-clock/"><strong>Xiaomi Mijia LYWSD02</strong></a> temperature and humidity sensor via Bluetooth Low Energy (BLE).
 </p>
 
 <p align="center">
@@ -34,7 +34,9 @@
 </p>
 
 <p align="center">
-  <img src="https://drslid.github.io/LYWSD02-BLE-Dashboard/img/dashboard_lywsd02.jpg" alt="Dashboard lywsd02 Screenshot" width="600">
+  <a href="https://drslid.github.io/LYWSD02-BLE-Dashboard/" target="_blank">
+    <img src="https://drslid.github.io/LYWSD02-BLE-Dashboard/img/dashboard_lywsd02.jpg" alt="Dashboard lywsd02 Screenshot" width="600">
+  </a>
 </p>
 
 ## 📖 Table of Contents  
@@ -75,7 +77,7 @@
 
 ## 🤝 Contributing
 
-We appreciate and encourage community contributions! If you'd like to help improve this project, here’s how you can get involved.
+I appreciate and encourage community contributions! If you'd like to help improve this project, here’s how you can get involved.
 
 ### 🚀 How You Can Contribute
 
