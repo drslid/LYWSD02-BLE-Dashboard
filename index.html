@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Monitor and configure your Xiaomi Mijia LYWSD02 temperature and humidity sensor with this BLE dashboard." />
+  <meta name="keywords" content="LYWSD02, BLE, Dashboard, Temperature, Humidity, Xiaomi, Mijia" />
+  <meta name="author" content="drslid" />
+  <title>LYWSD02 BLE Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              200: '#bae6fd',
+              300: '#7dd3fc',
+              400: '#38bdf8',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+              800: '#075985',
+              900: '#0c4a6e',
+            },
+            secondary: {
+              50: '#f5f3ff',
+              100: '#ede9fe',
+              200: '#ddd6fe',
+              300: '#c4b5fd',
+              400: '#a78bfa',
+              500: '#8b5cf6',
+              600: '#7c3aed',
+              700: '#6d28d9',
+              800: '#5b21b6',
+              900: '#4c1d95',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .animate-pulse-slow {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    .sensor-card {
+      transition: all 0.3s ease;
+    }
+    .sensor-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+    .status-badge {
+      transition: all 0.3s ease;
+    }
+    .log-entry {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 0.5rem 0;
+    }
+    .log-entry:last-child {
+      border-bottom: none;
+    }
+    .value-highlight {
+      font-size: 1.75rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .unit-selector label {
+      transition: all 0.2s ease;
+    }
+    .unit-selector label:hover {
+      background-color: #f5f3ff;
+    }
+    .unit-selector input:checked + span {
+      background-color: #f3f4f6;
+      color: black;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans antialiased">
+  <div class="max-w-6xl mx-auto p-4 md:p-6">
+    <header class="mb-8 text-center">
+      <div class="flex items-center justify-center mb-2">
+        <i class="fas fa-temperature-low text-primary-600 text-3xl mr-3"></i>
+        <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">
+          LYWSD02 BLE Dashboard
+        </h1>
+      </div>
+      <p class="text-gray-600 max-w-2xl mx-auto">
+        Monitor and configure your Xiaomi Mijia LYWSD02 temperature and humidity sensor
+      </p>
+    </header>
+    <div class="bg-white rounded-xl shadow-md p-5 mb-6">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div id="status" class="status-badge px-4 py-2 rounded-full text-sm font-medium flex items-center">
+            <span class="w-2 h-2 rounded-full mr-2 bg-red-500"></span>
+            <span>Disconnected</span>
+          </div>
+          <div id="retry-count" class="text-sm text-gray-500 hidden md:block"></div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div id="mac" class="bg-gray-100 px-3 py-1 rounded-full text-xs font-mono text-gray-700 flex items-center">
+            <i class="fas fa-microchip mr-1 text-gray-500"></i>
+            <span>--:--:--:--:--:--</span>
+          </div>
+          <button id="connectBtn" class="px-5 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2">
+            <i class="fas fa-plug"></i>
+            <span>Connect</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
+      <div class="sensor-card bg-white rounded-xl shadow-md p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold flex items-center gap-2">
+            <i class="fas fa-temperature-high text-red-500"></i>
+            Temperature
+          </h2>
+          <span class="text-xs bg-gray-100 px-2 py-1 rounded-full" id="temp-timestamp">--:--:--</span>
+        </div>
+        <div class="flex items-end justify-between">
+          <div>
+            <div class="value-highlight text-gray-800" id="temperature">--</div>
+            <div class="text-sm text-gray-500">Current reading</div>
+          </div>
+          <div class="text-right">
+            <div class="text-xs text-gray-500 mb-1">Updates</div>
+            <div class="text-xl font-bold text-primary-600" id="update-count">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="sensor-card bg-white rounded-xl shadow-md p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold flex items-center gap-2">
+            <i class="fas fa-droplet text-blue-500"></i>
+            Humidity
+          </h2>
+          <span class="text-xs bg-gray-100 px-2 py-1 rounded-full" id="hum-timestamp">--:--:--</span>
+        </div>
+        <div class="flex items-end justify-between">
+          <div>
+            <div class="value-highlight text-gray-800" id="humidity">--</div>
+            <div class="text-sm text-gray-500">Current reading</div>
+          </div>
+          <div class="w-20 h-2 bg-gray-200 rounded-full overflow-hidden mt-2">
+            <div id="humidity-bar" class="h-full bg-blue-500" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sensor-card bg-white rounded-xl shadow-md p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold flex items-center gap-2">
+            <i class="fas fa-battery-three-quarters text-green-500"></i>
+            Battery
+          </h2>
+          <span class="text-xs bg-gray-100 px-2 py-1 rounded-full" id="bat-timestamp">--:--:--</span>
+        </div>
+        <div class="flex items-end justify-between">
+          <div>
+            <div class="value-highlight text-gray-800" id="battery">--</div>
+            <div class="text-sm text-gray-500">Remaining</div>
+          </div>
+          <div class="w-24 h-3 bg-gray-200 rounded-full overflow-hidden mt-2">
+            <div id="battery-bar" class="h-full bg-green-500" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+      <div class="bg-white rounded-xl shadow-md p-5">
+        <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+          <i class="fas fa-clock text-secondary-600"></i>
+          Clock Synchronization
+        </h2>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
+            <div class="relative">
+              <select id="timezone" class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:border-secondary-500 rounded-lg">
+                <option value="-12">UTC-12:00 — Baker Island</option>
+                <option value="-11">UTC-11:00 — American Samoa</option>
+                <option value="-10">UTC-10:00 — Hawaii</option>
+                <option value="-9">UTC-09:00 — Alaska</option>
+                <option value="-8">UTC-08:00 — Los Angeles</option>
+                <option value="-7">UTC-07:00 — Denver</option>
+                <option value="-6">UTC-06:00 — Chicago</option>
+                <option value="-5">UTC-05:00 — New York</option>
+                <option value="-3">UTC-03:00 — Buenos Aires</option>
+                <option value="0">UTC+00:00 — London</option>
+                <option value="1">UTC+01:00 — Berlin</option>
+                <option value="2">UTC+02:00 — Athens</option>
+                <option value="3">UTC+03:00 — Moscow</option>
+                <option value="5.5">UTC+05:30 — India</option>
+                <option value="8">UTC+08:00 — Beijing</option>
+                <option value="9">UTC+09:00 — Tokyo</option>
+                <option value="10">UTC+10:00 — Sydney</option>
+                <option value="12">UTC+12:00 — Auckland</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label for="offsetMinutes" class="block text-sm font-medium text-gray-700 mb-1">Manual offset (minutes)</label>
+            <div class="flex items-center gap-2">
+              <input type="range" id="offsetMinutesRange" min="-720" max="720" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+              <input type="number" id="offsetMinutes" value="0" min="-720" max="720" step="1" class="w-20 border border-gray-300 rounded-lg px-2 py-1 text-center">
+            </div>
+          </div>
+          <button id="syncBtn" class="w-full px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
+            <i class="fas fa-sync-alt"></i>
+            Sync Device Time
+          </button>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-md p-5">
+        <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+          <i class="fas fa-thermometer-half text-primary-600"></i>
+          Temperature Unit
+        </h2>
+        <div class="flex flex-col h-full">
+          <div class="unit-selector grid grid-cols-2 gap-2 mb-4">
+            <label class="cursor-pointer">
+              <input type="radio" name="unit" value="0" checked class="sr-only">
+              <span class="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:border-primary-300">
+                <i class="fas fa-temperature-low text-2xl text-primary-600 mb-1"></i>
+                <span>Celsius (°C)</span>
+              </span>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="unit" value="1" class="sr-only">
+              <span class="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:border-primary-300">
+                <i class="fas fa-temperature-high text-2xl text-red-500 mb-1"></i>
+                <span>Fahrenheit (°F)</span>
+              </span>
+            </label>
+          </div>
+          <div class="grid grid-cols-1 gap-2 mb-0 mt-11">
+            <button id="unitBtn" class="w-full px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
+              <i class="fas fa-save"></i>
+              Save Unit Preference
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white rounded-xl shadow-md p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold flex items-center gap-2">
+          <i class="fas fa-terminal text-gray-600"></i>
+          Device Logs
+        </h2>
+        <button id="clearLogs" class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+          <i class="fas fa-trash-alt"></i>
+          Clear
+        </button>
+      </div>
+      <div id="logs" class="bg-gray-50 h-60 overflow-y-auto p-3 text-sm font-mono rounded-lg border border-gray-200 space-y-1">
+        <div class="text-center text-gray-400 py-10">
+          <i class="fas fa-inbox text-3xl mb-2"></i>
+          <p>No logs yet. Connect to your device to see activity.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const SERVICE_UUID = 'ebe0ccb0-7a0a-4b0c-8a1a-6ff2997da3a6';
+    const TIME_UUID = 'ebe0ccb7-7a0a-4b0c-8a1a-6ff2997da3a6';
+    const UNIT_UUID = 'ebe0ccbe-7a0a-4b0c-8a1a-6ff2997da3a6';
+    const TEMP_HUM_UUID = 'ebe0ccc1-7a0a-4b0c-8a1a-6ff2997da3a6';
+    const BATTERY_UUID = 'ebe0ccc4-7a0a-4b0c-8a1a-6ff2997da3a6';
+    let device, server, service;
+    let updateCounter = 0;
+    let isConnected = false;
+    const log = (msg, type = 'info') => {
+      const logs = document.getElementById('logs');
+      if (logs.querySelector('.text-center')) {
+        logs.innerHTML = '';
+      }
+      const typeIcons = {
+        info: 'fa-info-circle text-blue-500',
+        success: 'fa-check-circle text-green-500',
+        warning: 'fa-exclamation-circle text-yellow-500',
+        error: 'fa-times-circle text-red-500'
+      };
+      const logEntry = document.createElement('div');
+      logEntry.className = 'log-entry flex items-start gap-2';
+      logEntry.innerHTML = `
+        <div class="flex-shrink-0 pt-0.5">
+          <i class="fas ${typeIcons[type]}"></i>
+        </div>
+        <div class="flex-1">
+          <div class="flex justify-between items-baseline">
+            <span class="font-medium">${msg}</span>
+            <span class="text-xs text-gray-500">${new Date().toLocaleTimeString()}</span>
+          </div>
+        </div>
+      `;
+      logs.appendChild(logEntry);
+      logs.scrollTop = logs.scrollHeight;
+    };
+    const updateBatteryUI = (batteryLevel) => {
+      document.getElementById('battery').textContent = `${batteryLevel}%`;
+      document.getElementById('battery-bar').style.width = `${batteryLevel}%`;
+      document.getElementById('bat-timestamp').textContent = new Date().toLocaleTimeString();
+      const batteryBar = document.getElementById('battery-bar');
+      if (batteryLevel <= 20) {
+        batteryBar.classList.remove('bg-green-500');
+        batteryBar.classList.add('bg-red-500');
+      } else if (batteryLevel <= 50) {
+        batteryBar.classList.remove('bg-green-500');
+        batteryBar.classList.add('bg-yellow-500');
+      } else {
+        batteryBar.classList.remove('bg-red-500', 'bg-yellow-500');
+        batteryBar.classList.add('bg-green-500');
+      }
+    };
+    const updateHumidityUI = (humidityLevel) => {
+      document.getElementById('humidity').textContent = `${humidityLevel}%`;
+      document.getElementById('humidity-bar').style.width = `${humidityLevel}%`;
+      document.getElementById('hum-timestamp').textContent = new Date().toLocaleTimeString();
+      const humidityBar = document.getElementById('humidity-bar');
+      if (humidityLevel <= 30) {
+        humidityBar.classList.remove('bg-blue-500');
+        humidityBar.classList.add('bg-red-500');
+      } else if (humidityLevel >= 70) {
+        humidityBar.classList.remove('bg-blue-500');
+        humidityBar.classList.add('bg-green-500');
+      } else {
+        humidityBar.classList.remove('bg-red-500', 'bg-green-500');
+        humidityBar.classList.add('bg-blue-500');
+      }
+    };
+    const updateTemperatureUI = (tempCelsius) => {
+      const isFahrenheit = document.querySelector('input[name="unit"]:checked').value === '1';
+      const tempValue = isFahrenheit ? (tempCelsius * 9/5 + 32).toFixed(2) : tempCelsius.toFixed(2);
+      const unit = isFahrenheit ? '°F' : '°C';
+      document.getElementById('temperature').textContent = `${tempValue} ${unit}`;
+      document.getElementById('temp-timestamp').textContent = new Date().toLocaleTimeString();
+    };
+    const connect = async () => {
+      log('Searching for device...');
+      const connectBtn = document.getElementById('connectBtn');
+      connectBtn.disabled = true;
+      connectBtn.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Connecting...';
+      document.getElementById('temperature').textContent = '--';
+      document.getElementById('humidity').textContent = '--';
+      document.getElementById('battery').textContent = '--';
+      try {
+        log('Opening Bluetooth device chooser...');
+        device = await navigator.bluetooth.requestDevice({
+          filters: [{ namePrefix: 'LYWSD02' }],
+          optionalServices: [SERVICE_UUID]
+        });
+        log('Connecting to GATT server...');
+        server = await device.gatt.connect();
+        device.removeEventListener('gattserverdisconnected', handleDisconnect);
+        device.addEventListener('gattserverdisconnected', handleDisconnect);
+        log(`Getting primary service: ${SERVICE_UUID}`);
+        service = await server.getPrimaryService(SERVICE_UUID);
+        isConnected = true;
+        updateConnectionStatus(true);
+        log('Successfully connected to device', 'success');
+        document.getElementById('mac').innerHTML = `<i class="fas fa-microchip mr-1 text-gray-500"></i> ${device.id || 'Unknown'}`;
+        log(`Reading battery characteristic: ${BATTERY_UUID}`);
+        const batteryChar = await service.getCharacteristic(BATTERY_UUID);
+        const battery = (await batteryChar.readValue()).getUint8(0);
+        updateBatteryUI(battery);
+        log(`Subscribing to temperature/humidity characteristic: ${TEMP_HUM_UUID}`);
+        const dataChar = await service.getCharacteristic(TEMP_HUM_UUID);
+        dataChar.addEventListener('characteristicvaluechanged', event => {
+          const data = new Uint8Array(event.target.value.buffer);
+          const temp = (data[1] << 8 | data[0]) / 100;
+          const hum = data[2];
+          updateCounter++;
+          document.getElementById('update-count').textContent = updateCounter;
+          updateTemperatureUI(temp);
+          updateHumidityUI(hum);
+          log(`Received update #${updateCounter}: ${temp.toFixed(2)}°C, ${hum}%`, 'info');
+        });
+        await dataChar.startNotifications();
+        log('Notifications started for temperature/humidity', 'success');
+      } catch (err) {
+        isConnected = false;
+        log(`Connection failed: ${err}`, 'error');
+        updateConnectionStatus(false);
+      } finally {
+        connectBtn.disabled = false;
+        connectBtn.innerHTML = isConnected
+          ? '<i class="fas fa-plug"></i> Disconnect'
+          : '<i class="fas fa-plug"></i> Connect';
+      }
+    };
+    const handleDisconnect = () => {
+      if (isConnected) {
+        isConnected = false;
+        log('Device disconnected', 'warning');
+        updateConnectionStatus(false);
+      }
+    };
+    const updateConnectionStatus = (connected) => {
+      const status = document.getElementById('status');
+      const connectBtn = document.getElementById('connectBtn');
+      if (connected) {
+        status.innerHTML = '<span class="w-2 h-2 rounded-full mr-2 bg-green-500"></span><span>Connected</span>';
+        status.className = 'status-badge px-4 py-2 rounded-full text-sm font-medium flex items-center bg-green-100 text-green-800';
+        connectBtn.innerHTML = '<i class="fas fa-plug"></i> Disconnect';
+      } else {
+        status.innerHTML = '<span class="w-2 h-2 rounded-full mr-2 bg-red-500"></span><span>Disconnected</span>';
+        status.className = 'status-badge px-4 py-2 rounded-full text-sm font-medium flex items-center bg-red-100 text-red-800';
+        connectBtn.innerHTML = '<i class="fas fa-plug"></i> Connect';
+      }
+    };
+    const syncTime = async () => {
+      if (!isConnected) {
+        log('Device is not connected. Please connect first.', 'warning');
+        return;
+      }
+      const syncBtn = document.getElementById('syncBtn');
+      syncBtn.disabled = true;
+      syncBtn.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Syncing...';
+      try {
+        const char = await service.getCharacteristic(TIME_UUID);
+        const offset = parseInt(document.getElementById('offsetMinutes').value || '0', 10) * 60;
+        const tz = parseInt(document.getElementById('timezone').value);
+        const now = Math.floor(Date.now() / 1000) + offset;
+        const buffer = new ArrayBuffer(5);
+        const view = new DataView(buffer);
+        view.setUint32(0, now, true);
+        view.setUint8(4, tz);
+        await char.writeValue(buffer);
+        log('Device time successfully synchronized', 'success');
+      } catch (err) {
+        log(`Error syncing time: ${err}`, 'error');
+      } finally {
+        syncBtn.disabled = false;
+        syncBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Sync Device Time';
+      }
+    };
+    const updateUnit = async () => {
+      if (!isConnected) {
+        log('Device is not connected. Please connect first.', 'warning');
+        return;
+      }
+      const unitBtn = document.getElementById('unitBtn');
+      unitBtn.disabled = true;
+      unitBtn.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Saving...';
+      try {
+        const unitValue = parseInt(document.querySelector('input[name="unit"]:checked').value);
+        const char = await service.getCharacteristic(UNIT_UUID);
+        await char.writeValue(new Uint8Array([unitValue]));
+        log(`Temperature unit set to ${unitValue === 0 ? 'Celsius (°C)' : 'Fahrenheit (°F)'}`, 'success');
+      } catch (err) {
+        log(`Error setting unit: ${err}`, 'error');
+      } finally {
+        unitBtn.disabled = false;
+        unitBtn.innerHTML = '<i class="fas fa-save"></i> Save Unit Preference';
+      }
+    };
+    document.getElementById('connectBtn').addEventListener('click', () => {
+      if (isConnected) {
+        log('Disconnecting from device...');
+        device.gatt.disconnect();
+        return;
+      }
+      connect();
+    });
+    document.getElementById('syncBtn').addEventListener('click', syncTime);
+    document.getElementById('unitBtn').addEventListener('click', updateUnit);
+    document.getElementById('clearLogs').addEventListener('click', () => {
+      document.getElementById('logs').innerHTML = `
+        <div class="text-center text-gray-400 py-10">
+          <i class="fas fa-inbox text-3xl mb-2"></i>
+          <p>No logs yet. Connect to your device to see activity.</p>
+        </div>
+      `;
+    });
+    document.getElementById('offsetMinutesRange').addEventListener('input', (e) => {
+      document.getElementById('offsetMinutes').value = e.target.value;
+    });
+    document.getElementById('offsetMinutes').addEventListener('input', (e) => {
+      let value = parseInt(e.target.value);
+      if (isNaN(value)) value = 0;
+      if (value < -720) value = -720;
+      if (value > 720) value = 720;
+      document.getElementById('offsetMinutesRange').value = value;
+      document.getElementById('offsetMinutes').value = value;
+    });
+    window.addEventListener('DOMContentLoaded', () => {
+      const tzOffset = -new Date().getTimezoneOffset() / 60;
+      const tzSelect = document.getElementById('timezone');
+      for (let option of tzSelect.options) {
+        if (parseFloat(option.value) === tzOffset) {
+          tzSelect.value = option.value;
+          break;
+        }
+      }
+      if (!document.getElementById('logs').querySelector('.log-entry')) {
+        document.getElementById('logs').innerHTML = `
+          <div class="text-center text-gray-400 py-10">
+            <i class="fas fa-inbox text-3xl mb-2"></i>
+            <p>No logs yet. Connect to your device to see activity.</p>
+          </div>
+        `;
+      }
+    });
+  </script>
+  <footer class="text-center text-gray-500 mt-8">
+    <p>&copy; 2025 drslid. All rights reserved.</p>
+    <p>Check out the <a href="https://github.com/drslid/LYWSD02-BLE-Dashboard" target="_blank" class="text-primary-600 hover:underline">GitHub repository</a> for more information.</p>
+  </footer>
+</body>
+</html>
