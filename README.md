@@ -2,17 +2,17 @@
 <a name="top"></a>
 
 <p align="center">
-    <a href="https://github.com/drslid/LYWSD02-BLE-Dashboard/graphs/contributors">
-        <img src="https://img.shields.io/github/contributors/drslid/LYWSD02-BLE-Dashboard.svg?style=for-the-badge" alt="Contributors">
+    <a href="https://github.com/drslid/LYWSD02_BLE_Dashboard/graphs/contributors">
+        <img src="https://img.shields.io/github/contributors/drslid/LYWSD02_BLE_Dashboard.svg?style=for-the-badge" alt="Contributors">
     </a>
-    <a href="https://github.com/drslid/LYWSD02-BLE-Dashboard/stargazers">
-        <img src="https://img.shields.io/github/stars/drslid/LYWSD02-BLE-Dashboard.svg?style=for-the-badge" alt="Stargazers">
+    <a href="https://github.com/drslid/LYWSD02_BLE_Dashboard/stargazers">
+        <img src="https://img.shields.io/github/stars/drslid/LYWSD02_BLE_Dashboard.svg?style=for-the-badge" alt="Stargazers">
     </a>
-    <a href="https://github.com/drslid/LYWSD02-BLE-Dashboard/network/members">
-        <img src="https://img.shields.io/github/forks/drslid/LYWSD02-BLE-Dashboard.svg?style=for-the-badge" alt="Forks">
+    <a href="https://github.com/drslid/LYWSD02_BLE_Dashboard/network/members">
+        <img src="https://img.shields.io/github/forks/drslid/LYWSD02_BLE_Dashboard.svg?style=for-the-badge" alt="Forks">
     </a>
-    <a href="https://github.com/drslid/LYWSD02-BLE-Dashboard/issues">
-        <img src="https://img.shields.io/github/issues/drslid/LYWSD02-BLE-Dashboard.svg?style=for-the-badge" alt="Issues">
+    <a href="https://github.com/drslid/LYWSD02_BLE_Dashboard/issues">
+        <img src="https://img.shields.io/github/issues/drslid/LYWSD02_BLE_Dashboard.svg?style=for-the-badge" alt="Issues">
     </a>
 </p>
 
@@ -23,7 +23,7 @@
 </p>
 
 <p align="center">
-  🌐 Official Website : <a target="_blank" href="https://drslid.github.io/LYWSD02-BLE-Dashboard/"><strong> https://drslid.github.io/LYWSD02-BLE-Dashboard/</strong> </a>
+  🌐 Official Website : <a target="_blank" href="https://drslid.github.io/LYWSD02_BLE_Dashboard/"><strong> https://drslid.github.io/LYWSD02_BLE_Dashboard/</strong> </a>
 </p>
 
 <p align="center">
@@ -34,8 +34,8 @@
 </p>
 
 <p align="center">
-  <a href="https://drslid.github.io/LYWSD02-BLE-Dashboard/" target="_blank">
-    <img src="https://drslid.github.io/LYWSD02-BLE-Dashboard/img/dashboard_lywsd02.jpg" alt="Dashboard lywsd02 Screenshot" width="600">
+  <a href="https://drslid.github.io/LYWSD02_BLE_Dashboard/" target="_blank">
+    <img src="https://drslid.github.io/LYWSD02_BLE_Dashboard/img/dashboard_lywsd02.jpg" alt="Dashboard lywsd02 Screenshot" width="600">
   </a>
 </p>
 
@@ -104,8 +104,8 @@ I appreciate and encourage community contributions! If you'd like to help improv
 
 ## 👥 **Contributors**
 
-<a href="https://github.com/drslid/LYWSD02-BLE-Dashboard/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=drslid/LYWSD02-BLE-Dashboard" alt="LYWSD02-BLE-Dashboard Contributors"/>
+<a href="https://github.com/drslid/LYWSD02_BLE_Dashboard/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=drslid/LYWSD02_BLE_Dashboard" alt="LYWSD02_BLE_Dashboard Contributors"/>
 </a>
 
 <p align="right"><a href="#top">⬆️ Back to top</a></p>
